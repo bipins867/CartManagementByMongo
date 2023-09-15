@@ -1,5 +1,6 @@
 const mongoose=require('mongoose')
-
+const Order=require('../models/order')
+const Product=require('../models/product')
 const Schema=mongoose.Schema;
 
 const UserSchema=new Schema({
@@ -46,6 +47,52 @@ UserSchema.methods.deleteFromCart=function(productId){
   const products=this.cart.items.filter(prod=>prod.productId.toString()!=productId.toString())
   this.cart.items=products
   return this.save();
+}
+
+
+UserSchema.methods.addOrders=function(){
+      
+      return Order.create({cart :this.cart,userId:this._id})
+      .then(result=>{
+        this.cart.items=[]
+        return this.save();
+      })
+      .then(result=>{
+        console.log("Added Cart Items to the Order")
+      })
+      .catch(err=>{
+        console.log(err)
+      })
+      
+      
+    }
+
+UserSchema.methods.getOrders=function(){
+ 
+  
+    return Order.find({userId:this._id})
+    .then(async orders=>{
+      const userOrders=[]
+
+      for(const order of orders){
+          const products=[]
+
+          for(const prod of order.cart.items){
+            
+            const p=await Product.findById(prod.productId)
+            
+            const x={title:p.title,quantity:prod.quantity}
+            //console.log(x)
+            products.push(x)
+          }
+          userOrders.push({products:products,id:order._id})
+      }
+
+      return userOrders
+    })
+    .catch(err=>{
+      console.log(err)
+    })
 }
 module.exports=mongoose.model('User',UserSchema)
 
