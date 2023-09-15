@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 const getDb=require('../util/database').getDb;
 const mongoDb=require('mongodb')
-
+const Product=require('../models/product')
 
 class User{
   constructor(name,email,cart,id){
@@ -42,6 +42,52 @@ class User{
       {$set:{cart:this.cart}})   
   }
 
+  addOrders(){
+    const db=getDb()
+
+    return db.collection("orders").insertOne({cart :this.cart,userId:new mongoDb.ObjectId(this._id)})
+    .then(result=>{
+      this.cart.items=[]
+      
+      return db.collection('users').updateOne({_id:new mongoDb.ObjectId(this._id)},
+      {$set:{cart:this.cart}})
+      
+    })
+    .then(result=>{
+      return result
+    })
+    .catch(err=>{
+      console.log(err)
+    })
+  }
+  getOrders(){
+    const db=getDb();
+    
+    return db.collection('orders').find({userId:new mongoDb.ObjectId(this._id)}).toArray()
+    .then(async orders=>{
+      const userOrders=[]
+
+      for(const order of orders){
+          const products=[]
+
+          for(const prod of order.cart.items){
+            
+            const p=await Product.findById(prod.productId)
+            
+            const x={title:p.title,quantity:prod.quantity}
+            console.log(x)
+            products.push(x)
+          }
+          userOrders.push({products:products,id:order._id})
+      }
+
+      return userOrders
+    })
+    .catch(err=>{
+      console.log(err)
+    })
+  }
+
   deleteFromCart(productId){
     const db=getDb();
     const products=this.cart.items.filter(prod=>prod.productId.toString()!=productId.toString())
@@ -53,9 +99,9 @@ class User{
 
   static findById(userId){
     const db=getDb();
-    return db.collection('users').findOne({_id:new mongoDb.ObjectId(userId)})
+    return db.collection('users').find({_id:new mongoDb.ObjectId(userId)}).next()
     .then(result=>{
-      //console.log(result)
+      console.log(result)
       return result
     })
     .catch(err=>{
