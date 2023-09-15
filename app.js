@@ -2,24 +2,25 @@ const path = require('path');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose=require('mongoose')
+
 
 const errorController = require('./controllers/error');
-const mongoConnect=require('./util/database').mongoConnect
-const User=require('./models/user')
+//const User=require('./models/user')
 
 
 const app = express();
-app.use((req,res,next)=>{
-  User.findById('6500535d983c78d34ef40400')
-  .then(user=>{
-    req.user=new User(user.name,user.email,user.cart,user._id);
-    //console.log("function",user)
-    next();
-  })
-  .catch(err=>{
-    console.log(err)
-  })
-})
+// app.use((req,res,next)=>{
+//   User.findById('6500535d983c78d34ef40400')
+//   .then(user=>{
+//     req.user=new User(user.name,user.email,user.cart,user._id);
+//     //console.log("function",user)
+//     next();
+//   })
+//   .catch(err=>{
+//     console.log(err)
+//   })
+// })
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -39,8 +40,11 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-mongoConnect(()=>{
-  //console.log(client)
-  console.log("Listening for the client")
-  app.listen(3000);
+mongoose.connect('mongodb+srv://bipinsingh:bipinsingh@cluster0.muz4szn.mongodb.net/Shop?retryWrites=true&w=majority')
+.then(result=>{
+    console.log("Listening for the client")
+    app.listen(3000);
+})
+.catch(err=>{
+  console.log(err)
 })
