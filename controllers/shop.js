@@ -47,7 +47,9 @@ exports.getCart = async (req, res, next) => {
   const products=[]
   for(const userProduct of req.user.cart.items){
     const product=await Product.findById(userProduct.productId)
-    products.push({...product,quantity:userProduct.quantity})
+    const x={title:product.title,_id:product._id,quantity:userProduct.quantity}
+    ///console.log(x)
+    products.push(x)
   }
   //console.log(products)
   res.render('shop/cart', {
@@ -78,7 +80,7 @@ exports.postCart = (req, res, next) => {
     return req.user.addToCart(product)
   })
   .then(result=>{
-    //console.log(result)
+    console.log(result)
     res.redirect('/cart')
   })
   .catch(err=>{
